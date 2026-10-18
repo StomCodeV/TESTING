@@ -68,10 +68,6 @@ fieldset label{display:flex;gap:10px;align-items:center;min-height:40px}
 @media(max-width:800px){.player{grid-template-columns:1fr}.side{display:none}.player.show .side{display:block}}
 @media(max-width:520px){main{padding-top:120px}#ldBtn{font-size:0}#ldBtn::before{content:'Lite';font-size:13px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
-/* Integrated learner dashboard */
-.dash-welcome{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}.dash-welcome h1{margin:5px 0}.dash-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.dash-stat{padding:15px 18px}.dash-stat b{display:block;font-size:30px;line-height:1.2;color:#fff;margin:4px 0}.dash-stat small{color:var(--mu);font-size:11px}.dash-hero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px 28px;margin:18px 0 28px;border:1px solid rgba(74,184,255,.28);border-radius:18px;background:radial-gradient(ellipse at 88% 40%,rgba(74,184,255,.2),transparent 40%),linear-gradient(110deg,rgba(14,42,94,.8),rgba(5,10,31,.8))}.dash-hero h2{margin:7px 0;font-size:clamp(22px,3vw,30px)}.dash-hero p{margin:0 0 14px}.dash-hero-mark{font-size:54px;color:#79d4ff;opacity:.7;padding:0 24px;text-shadow:0 0 28px #4ab8ff88}.dash-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:26px 0 12px}.dash-section-head h2{font-size:22px;margin:0 0 2px}.dash-section-head a{font-size:13px}.dash-course-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}.dash-course{padding:17px}.dash-course h3{min-height:44px;margin:5px 0 12px}.dash-course .bar{margin:12px 0 6px}.dash-course .btn{margin-top:8px}.dash-empty{padding:18px}.dash-empty a{display:inline-block;margin-left:8px}.dash-lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.65fr);gap:16px;margin:25px 0}.dash-activity{align-self:start;padding:18px}.dash-activity h3{margin:4px 0 12px}.dash-activity-item{padding:10px 0;border-top:1px solid var(--bd);font-size:12px}.dash-activity-item:first-child{border-top:0}.dash-activity-item small{display:block;color:var(--mu);font-size:10px}.dash-activity-empty{padding:10px 0;color:var(--mu)}
-@media(max-width:760px){.dash-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-lower{grid-template-columns:1fr}.dash-hero{padding:20px}.dash-hero-mark{font-size:38px;padding:0 8px}.dash-welcome{align-items:flex-start}.dash-welcome>.btn{flex:none}}
-@media(max-width:460px){.dash-welcome{display:block}.dash-welcome>.btn{margin-top:12px}.dash-hero-mark{display:none}.dash-section-head h2{font-size:19px}}
 </style>
 </head>
 <body>
@@ -80,7 +76,7 @@ fieldset label{display:flex;gap:10px;align-items:center;min-height:40px}
   <a class="brand" href="#/"><img src="https://i.postimg.cc/tT3Myvhj/ISHURI-Online-Learning-Logo.png" alt="">ISHURI ONLINE</a>
   <div class="nl">
     <a class="btn sm" href="#/catalogue">Courses</a>
-    <a class="btn sm" href="#/dashboard">Dashboard</a>
+    <a class="btn sm" href="dashboard.html">Dashboard</a>
     <button class="btn sm" data-act="lowdata" id="ldBtn" aria-pressed="false">Low-data mode</button>
     <span id="auth"></span>
   </div>
@@ -230,26 +226,13 @@ function vQuiz(s){
 }
 function vDash(){
  if(!ST.user)return gate('Your dashboard','Sign in to see your courses and progress.',1);
- const en=Object.values(ST.enr),done=en.reduce((n,e)=>n+(e.completed?.length||0),0),passed=ST.att.filter(a=>a.passed).length;
+ const en=Object.values(ST.enr),done=en.reduce((n,e)=>n+(e.completed?.length||0),0),passed=new Set(ST.att.filter(a=>a.passed).map(a=>a.slug)).size;
  const mine=en.map(e=>BY[e.slug]).filter(Boolean),rec=live().filter(c=>LESSONS[c.slug]&&!ST.enr[c.slug]).slice(0,3);
- const last=[...en].sort((a,b)=>(b.updatedAt?.toMillis?.()||0)-(a.updatedAt?.toMillis?.()||0))[0],lastCourse=last&&BY[last.slug];
- const resume=lastCourse?`<section class="dash-hero"><div><span class="eb">✦ &nbsp;Pick up where you left off</span><h2>${esc(lastCourse.title)}</h2><p class="mu">${(ST.enr[last.slug]?.completed||[]).length?`You have completed ${(ST.enr[last.slug].completed||[]).length} lesson(s). Keep your momentum going.`:'Your next lesson is ready. Continue at your own pace.'}</p><a class="btn p" href="#/learn/${last.slug}/${Math.min((last.last||0)+((ST.enr[last.slug]?.completed||[]).includes('l'+(last.last||0))?1:0),Math.max((LESSONS[last.slug]?.lessons.length||1)-1,0))}">Resume lesson ${Math.min((last.last||0)+((ST.enr[last.slug]?.completed||[]).includes('l'+(last.last||0))?2:1),LESSONS[last.slug]?.lessons.length||1)} →</a></div><div class="dash-hero-mark">▶</div></section>`:`<section class="dash-hero"><div><span class="eb">✦ &nbsp;Your learning starts here</span><h2>Build one useful skill at a time.</h2><p class="mu">Start with a short, free introduction. Your progress saves as you learn.</p><a class="btn p" href="#/course/computer-basics">Start with Computer Basics →</a></div><div class="dash-hero-mark">✦</div></section>`;
- return `<div class="dash-welcome"><div><span class="eb">Your learning overview</span><h1 style="font-size:clamp(30px,5vw,42px)">Welcome back, ${esc((ST.user.displayName||'learner').split(' ')[0])}.</h1><p class="mu">Small lessons. Practical skills. Progress you can see.</p></div><a class="btn" href="#/catalogue">Explore courses</a></div>
- <div class="dash-stats"><article class="card dash-stat"><span class="meta">Enrolled courses</span><b>${en.length}</b><small>In your learning space</small></article><article class="card dash-stat"><span class="meta">Lessons completed</span><b>${done}</b><small>One step at a time</small></article><article class="card dash-stat"><span class="meta">Quizzes passed</span><b>${passed}</b><small>Knowledge put into practice</small></article><article class="card dash-stat"><span class="meta">Learning hours</span><b>${(done*.5).toFixed(1).replace(/\.0$/,'')}</b><small>Estimated at 30 minutes per lesson</small></article></div>
- ${resume}<div class="dash-section-head"><div><h2>My courses</h2><p class="meta">${en.length?`${en.length} course${en.length===1?'':'s'} in progress`:'Your learning library will appear here.'}</p></div><a href="#/catalogue">Browse all courses →</a></div>
- ${mine.length?`<div class="dash-course-grid">${mine.map(c=>{const total=LESSONS[c.slug]?.lessons.length||c.mods,complete=ST.enr[c.slug].completed?.length||0,p=Math.min(100,Math.round(complete/total*100)),href=LESSONS[c.slug]?`#/learn/${c.slug}/${Math.min((ST.enr[c.slug].last||0)+((ST.enr[c.slug].completed||[]).includes('l'+(ST.enr[c.slug].last||0))?1:0),total-1)}`:`#/course/${c.slug}`;return `<article class="card dash-course"><span class="eb">${esc(CATS[c.cat].n)}</span><h3>${esc(c.title)}</h3><div class="bar"><i style="width:${p}%"></i></div><p class="meta">${complete} of ${total} lessons · ${p}%</p><a class="btn sm" href="${href}">Continue learning →</a></article>`}).join('')}</div>`:'<div class="card dash-empty">You have not started a course yet. Begin with a free introduction, then return here whenever you’re ready. <a href="#/course/computer-basics">Start Computer Basics →</a></div>'}
- <div class="dash-lower"><section><div class="dash-section-head"><div><h2>Good courses to start with</h2><p class="meta">These beginner-friendly introductions are ready to learn now.</p></div></div><div class="dash-course-grid">${rec.map(c=>`<article class="card dash-course"><span class="eb">${esc(CATS[c.cat].n)} · Beginner friendly</span><h3>${esc(c.title)}</h3><p class="meta">${esc(c.desc)}</p><a class="btn sm" href="#/course/${c.slug}">View free introduction →</a></article>`).join('')||'<div class="card dash-empty">You are enrolled in every course with lessons available. Explore the catalog to see what is coming next.</div>'}</div></section><aside class="card dash-activity"><span class="eb">Recent activity</span><h3>Your latest learning</h3><div id="dashActivity" class="meta">Loading your recent activity…</div></aside></div>`;
-}
-async function logActivity(type,slug,extra={}){
- if(!ST.user)return;
- try{await addDoc(collection(db,'activity'),{uid:ST.user.uid,type,courseId:slug,courseTitle:BY[slug]?.title||slug,at:serverTimestamp(),...extra})}
- catch(e){console.warn('Activity could not be saved:',e)}
-}
-async function loadDashActivity(){
- const box=$('#dashActivity');if(!box||!ST.user)return;
- try{const snap=await getDocs(query(collection(db,'activity'),where('uid','==',ST.user.uid))),items=snap.docs.map(d=>d.data()).sort((a,b)=>(b.at?.toMillis?.()||0)-(a.at?.toMillis?.()||0)).slice(0,5);
-  box.innerHTML=items.length?items.map(item=>{const title=esc(item.courseTitle||'a course'),label=item.type==='course_started'?'Started':item.type==='lesson_completed'?'Completed a lesson in':item.type==='quiz_passed'?'Passed a quiz in':'Learning activity';const when=item.at?.toDate?item.at.toDate():null;return `<div class="dash-activity-item">${label} ${label==='Learning activity'?'':title}<small>${when?new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(when):'Recently'}</small></div>`}).join(''):'<div class="dash-activity-empty">No activity yet. Start a free lesson and your milestones will show here.</div>'
- }catch(e){console.warn('Could not load recent activity:',e);if(e.code==='permission-denied')toast('Permission denied. Check Firestore rules.',1);box.innerHTML='<div class="dash-activity-empty">Recent activity is unavailable right now.</div>'}
+ const last=[...en].sort((a,b)=>(b.updatedAt?.toMillis?.()||0)-(a.updatedAt?.toMillis?.()||0))[0];
+ return `<h1 style="font-size:36px">Hello, ${esc((ST.user.displayName||'learner').split(' ')[0])}.</h1><div class="stats"><div class="card"><b>${en.length}</b><span class="meta">enrolled</span></div><div class="card"><b>${done}</b><span class="meta">lessons completed</span></div><div class="card"><b>${passed}</b><span class="meta">quizzes passed</span></div><div class="card"><b>${ST.ents.size}</b><span class="meta">courses owned</span></div></div>
+ ${last&&BY[last.slug]?`<div class="card"><span class="eb">Continue learning</span><h3>${esc(BY[last.slug].title)}</h3><a class="btn p" href="#/learn/${last.slug}/${last.last||0}">Resume lesson ${(last.last||0)+1}</a></div>`:''}
+ <h2>My courses</h2>${mine.length?`<div class="grid">${mine.map(c=>{const t=LESSONS[c.slug]?.lessons.length||1,d=ST.enr[c.slug].completed?.length||0,p=Math.round(d/t*100);return `<div class="card"><h3>${esc(c.title)}</h3><div class="bar"><i style="width:${p}%"></i></div><p class="meta">${d}/${t} lessons · ${p}%</p><a class="btn sm" href="#/course/${c.slug}">Open</a></div>`}).join('')}</div>`:'<div class="card">You have not enrolled yet. <a href="#/catalogue">Browse courses</a>.</div>'}
+ <h2>Recommended</h2><div class="grid">${rec.map(card).join('')||'<div class="card">No recommendations right now.</div>'}</div>`;
 }
 async function vAdmin(){
  if(!ST.user)return gate('Administrator sign-in','Sign in to continue.',1);
@@ -269,7 +252,7 @@ async function route(){
   app.innerHTML=r==='catalogue'?vCatalogue():r==='course'?vCourse(a):r==='learn'?vLearn(a,b):r==='quiz'?vQuiz(a):r==='dashboard'?vDash():r==='admin'?await vAdmin():vLanding();
   if(r==='catalogue'){if(CATS[a])$('#fc').value=a;updateGrid()}
  }catch(e){console.error(e);app.innerHTML='<div class="card"><h2>Something went wrong</h2><p class="mu">Please check your connection.</p><button class="btn p" data-act="reload">Retry</button></div>'}
- camMin=r?.12:0;camMax=r?.4:1;scrollTo(0,0);app.focus({preventScroll:true});document.title='ISHURI ONLINE'+(r?' · '+r:'');if(r==='dashboard')loadDashActivity();updScroll();
+ camMin=r?.12:0;camMax=r?.4:1;scrollTo(0,0);app.focus({preventScroll:true});document.title='ISHURI ONLINE'+(r?' · '+r:'');updScroll();
 }
 addEventListener('hashchange',route);
 document.addEventListener('input',e=>{if(e.target.closest('#filters'))updateGrid()});
@@ -279,13 +262,13 @@ document.addEventListener('submit',async e=>{
  if(ans.includes(-1)){toast('Please answer every question.',1);return}
  const score=ans.filter((v,k)=>v===has.quiz[k].a).length,pass=score/has.quiz.length>=.7;
  const btn=f.querySelector('button');
- await busy(btn,async()=>{if(ST.user){await addDoc(collection(db,'quizAttempts'),{uid:ST.user.uid,slug:s,score,total:has.quiz.length,passed:pass,practice:true,at:serverTimestamp()});ST.att.push({slug:s,passed:pass});if(pass)await logActivity('quiz_passed',s)}QZ[s]={done:true,score,pass,ans};route()});
+ await busy(btn,async()=>{if(ST.user){await addDoc(collection(db,'quizAttempts'),{uid:ST.user.uid,slug:s,score,total:has.quiz.length,passed:pass,practice:true,at:serverTimestamp()});ST.att.push({slug:s,passed:pass})}QZ[s]={done:true,score,pass,ans};route()});
 });
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,s=b.dataset.s;
  if(a==='signin')return signIn();
  if(a==='signout')return busy(b,async()=>{await signOut(auth);location.hash='#/';toast('Signed out.')});
- if(a==='go-dash'){location.hash='#/dashboard';return}
+ if(a==='go-dash'){window.location.href='dashboard.html';return}
  if(a==='reload')return location.reload();
  if(a==='drawer'){const p=$('#pl');p.classList.toggle(innerWidth<800?'show':'hide');return}
  if(a==='retry'){delete QZ[s];return route()}
@@ -293,10 +276,10 @@ document.addEventListener('click',e=>{
  if(a==='pay')return toast('Payment Integration Pending: MTN MoMo and Airtel Money need a trusted backend. No access is granted from the browser.',1);
  if(!ST.user&&['enroll','complete','savecourse'].includes(a))return toast('Please sign in first.',1);
  if(a==='enroll')return busy(b,async()=>{const r=doc(db,'enrollments',ST.user.uid+'_'+s);if((await getDoc(r)).exists()){toast('You are already enrolled.');await loadUser();return route()}
-  await setDoc(r,{uid:ST.user.uid,slug:s,completed:[],last:0,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});await logActivity('course_started',s);await loadUser();toast('Enrolled.');route()});
+  await setDoc(r,{uid:ST.user.uid,slug:s,completed:[],last:0,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});await loadUser();toast('Enrolled.');route()});
  if(a==='complete')return busy(b,async()=>{const i=+b.dataset.i,r=doc(db,'enrollments',ST.user.uid+'_'+s),ex=ST.enr[s];
   await setDoc(r,{uid:ST.user.uid,slug:s,last:i,completed:arrayUnion('l'+i),updatedAt:serverTimestamp(),...(ex?{}:{createdAt:serverTimestamp()})},{merge:true});
-  await logActivity('lesson_completed',s,{lessonIndex:i});await loadUser();toast('Lesson completed.');route()});
+  await loadUser();toast('Lesson completed.');route()});
  if(a==='savecourse')return busy(b,async()=>{const p=+$('#p-'+s).value,st=$('#s-'+s).value;
   if(st==='archived'&&!confirm('Archive this course? It will be hidden from the catalogue.'))return;
   if(!Number.isInteger(p)||p<0||p>1000000){toast('Price must be a whole number between 0 and 1,000,000.',1);return}
@@ -500,7 +483,3 @@ syncLow();start3d();loadOverrides().then(()=>{if(ST.ready)route()});
 </script>
 </body>
 </html>
-
-
-
-
